@@ -163,7 +163,11 @@ class ChatService:
         # (so it ranks/decays like any memory) and on the profile (so every
         # prompt honours it). Keep them in sync in both directions.
         lang = profile_updates.get("preferred_language")
-        if lang and not any(c.type == MemoryType.PREFERENCE and (c.key or "").lower() == "language" for c in candidates):
+        if lang and str(lang).strip().lower() == (profile.preferred_language or "").lower():
+            # The model echoed the current language; that is not new information.
+            profile_updates.pop("preferred_language", None)
+            lang = None
+        if lang and not any(c.type == MemoryType.PREFERENCE and "lang" in (c.key or "").lower() for c in candidates):
             candidates.append(MemoryCandidate(type=MemoryType.PREFERENCE, key="language", value=str(lang), confidence=0.95))
 
         if candidates:

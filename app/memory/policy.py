@@ -17,6 +17,20 @@ from app.brain.models import LIFE_AREAS, MemoryCandidate, MemoryType
 # derived by the system, not accepted from extraction.
 ALLOWED_FROM_CHAT = {MemoryType.GOAL, MemoryType.PREFERENCE, MemoryType.INTEREST, MemoryType.FACT, MemoryType.EVENT}
 
+# Profile fields belong on the User node. If the extractor also emits them as
+# facts they would duplicate the profile, so they are dropped here.
+PROFILE_FIELD_KEYS = {
+    "name", "full_name", "first_name", "user_name",
+    "date_of_birth", "dob", "birth_date", "birthdate", "birthday",
+    "time_of_birth", "birth_time",
+    "birth_place", "birthplace", "place_of_birth", "born_in",
+}
+
+KNOWN_LANGUAGES = {
+    "english", "hindi", "hinglish", "tamil", "telugu", "kannada", "malayalam", "marathi",
+    "gujarati", "bengali", "punjabi", "odia", "urdu", "assamese",
+}
+
 _TRANSIENT_PATTERNS = re.compile(
     r"\b(today|tonight|right now|this morning|this evening|at the moment|currently feeling|"
     r"tired|sleepy|hungry|bored|headache)\b",
@@ -65,6 +79,8 @@ class MemoryPolicy:
         if candidate.status == "withdrawn":
             # Withdrawals are always processed; they remove, never add.
             return PolicyDecision(True, "withdrawal of an existing memory")
+        if candidate.type == MemoryType.FACT and (candidate.key or "").lower() in PROFILE_FIELD_KEYS:
+            return PolicyDecision(False, f"{candidate.key} is a profile field; stored on the user profile, not as a memory")
         if not candidate.persistent:
             return PolicyDecision(False, "extractor marked it non-persistent")
         if candidate.confidence < self.confidence_floor:
@@ -80,7 +96,16 @@ class MemoryPolicy:
 
     def normalize(self, candidate: MemoryCandidate) -> MemoryCandidate:
         areas = [a for a in candidate.life_areas if a in LIFE_AREAS] or ["general"]
-        return candidate.model_copy(update={"life_areas": areas, "value": candidate.value.strip()})
+        key = candidate.key
+        value = candidate.value.strip()
+        # Language preferences must share one slot, whatever the extractor
+        # called it, so a new language supersedes instead of duplicating.
+        if candidate.type == MemoryType.PREFERENCE and (
+            (key and "lang" in key.lower()) or value.lower() in KNOWN_LANGUAGES
+        ):
+            key = "language"
+            value = value.title()
+        return candidate.model_copy(update={"life_areas": areas, "value": value, "key": key})
 
     def importance_for(self, candidate: MemoryCandidate) -> float:
         base = {

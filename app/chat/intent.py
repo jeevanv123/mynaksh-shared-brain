@@ -34,7 +34,11 @@ _FOLLOWUP = re.compile(
     re.I,
 )
 _ANAPHORA = re.compile(r"\b(that|this|it|those|these)\b", re.I)
-_RECALL = re.compile(r"\b(remember|recall|what do you know about me|my goals?|what did i tell you|do you know)\b", re.I)
+_RECALL = re.compile(
+    r"\b(remember|recall|remind me|what do you know about me|what have i told you|what did i tell you|"
+    r"what did i say|what do you know about my|do you know about me|my goals?)\b",
+    re.I,
+)
 _PROFILE_DECL = re.compile(r"\b(my name is|i was born|born on|i am \d{1,2} years|my birth|i live in|i prefer|reply in)\b", re.I)
 _ASTRO = re.compile(r"\b(horoscope|zodiac|sign|planet|saturn|jupiter|rashi|kundli|kundali|nakshatra|astrolog|stars?)\b", re.I)
 

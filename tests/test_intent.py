@@ -21,6 +21,7 @@ def rules_only() -> QueryUnderstander:
         ("Should I invest in property this year?", "advice", ["finance"]),
         ("What do you remember about my career goals?", "recall", ["career"]),
         ("What do you know about me?", "recall", None),  # all areas
+        ("Remind me, what have I told you about my family and finances?", "recall", ["finance", "family"]),
         ("My name is Rahul. I was born on 15 August 1995 in Delhi.", "profile_update", ["general"]),
         ("hello", "smalltalk", ["general"]),
     ],

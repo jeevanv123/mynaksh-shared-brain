@@ -71,6 +71,18 @@ def test_normalize_filters_unknown_life_areas(policy):
     assert c.life_areas == ["career"] and c.value == "Career Change"
 
 
+@pytest.mark.parametrize("key, value", [("preferred_language", "hindi"), ("reply_language", "Hindi"), (None, "hindi"), ("language", "HINDI")])
+def test_language_preferences_share_one_slot(policy, key, value):
+    c = policy.normalize(MemoryCandidate(type=MemoryType.PREFERENCE, key=key, value=value))
+    assert (c.key, c.value) == ("language", "Hindi")
+
+
+@pytest.mark.parametrize("key", ["name", "date_of_birth", "dob", "birth_place", "birthplace"])
+def test_profile_fields_are_not_stored_as_facts(policy, key):
+    d = policy.evaluate(MemoryCandidate(type=MemoryType.FACT, key=key, value="Lucknow", confidence=0.95))
+    assert not d.keep and "profile field" in d.reason
+
+
 def test_importance_ranks_goals_above_interests(policy):
     goal = MemoryCandidate(type=MemoryType.GOAL, value="Career Change")
     interest = MemoryCandidate(type=MemoryType.INTEREST, value="Chess")
