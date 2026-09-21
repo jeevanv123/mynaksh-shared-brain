@@ -1,0 +1,49 @@
+{
+  "profile": {"name": "Rahul", "date_of_birth": "1995-08-15", "time_of_birth": "10:30", "birth_place": "Delhi"},
+  "turns": [
+    {
+      "session": "s1",
+      "message": "I'm planning to switch jobs next year.",
+      "expect_memories": [{"type": "goal", "keys": ["career_change", "job_switch", "switch_jobs", "job_change"], "attributes": {"target_year": 2027}}],
+      "life_areas": ["career"]
+    },
+    {
+      "session": "s1",
+      "message": "What should I focus on for my career?",
+      "expect_memories": [],
+      "life_areas": ["career"],
+      "expect_context_types": ["goal"]
+    },
+    {
+      "session": "s1",
+      "message": "Why do you say that?",
+      "expect_memories": [],
+      "expect_intent": "followup"
+    },
+    {
+      "session": "s1",
+      "message": "I'm feeling tired today.",
+      "expect_memories": [],
+      "expect_no_new_memory": true
+    },
+    {
+      "session": "s2",
+      "message": "What do you remember about my career goals?",
+      "expect_memories": [],
+      "expect_intent": "recall",
+      "expect_context_types": ["goal"]
+    },
+    {
+      "session": "s2",
+      "message": "Will my marriage be happy?",
+      "expect_memories": [],
+      "life_areas": ["relationships"],
+      "forbid_context_types": ["goal"]
+    },
+    {
+      "session": "s2",
+      "message": "I prefer Hindi replies.",
+      "expect_memories": [{"type": "preference", "keys": ["language", "preferred_language"], "value_contains": "hindi"}]
+    }
+  ]
+}
