@@ -77,7 +77,12 @@ def test_language_preferences_share_one_slot(policy, key, value):
     assert (c.key, c.value) == ("language", "Hindi")
 
 
-@pytest.mark.parametrize("key", ["name", "date_of_birth", "dob", "birth_place", "birthplace"])
+def test_language_emitted_as_a_fact_is_coerced_to_the_preference_slot(policy):
+    c = policy.normalize(MemoryCandidate(type=MemoryType.FACT, key="preferred_language", value="Hindi"))
+    assert (c.type, c.key, c.value) == (MemoryType.PREFERENCE, "language", "Hindi")
+
+
+@pytest.mark.parametrize("key", ["name", "date_of_birth", "dob", "birth_place", "birthplace", "date_of_birth_text", "birth_year", "born_in", "full_name"])
 def test_profile_fields_are_not_stored_as_facts(policy, key):
     d = policy.evaluate(MemoryCandidate(type=MemoryType.FACT, key=key, value="Lucknow", confidence=0.95))
     assert not d.keep and "profile field" in d.reason

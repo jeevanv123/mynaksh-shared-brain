@@ -157,7 +157,9 @@ class ChatService:
 
         changes: list[MemoryChange] = []
         profile_updates = dict(extraction.profile_updates)
-        candidates = list(extraction.memories)
+        # Normalise first so a language emitted as fact/preferred_language is
+        # already preference/language when we check for it below.
+        candidates = [self.brain.policy.normalize(c) for c in extraction.memories]
 
         # A stated language preference lives in two places: as a PREFERS edge
         # (so it ranks/decays like any memory) and on the profile (so every

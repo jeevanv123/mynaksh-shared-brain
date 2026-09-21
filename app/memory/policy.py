@@ -26,6 +26,9 @@ PROFILE_FIELD_KEYS = {
     "birth_place", "birthplace", "place_of_birth", "born_in",
 }
 
+# Catches extractor variants like date_of_birth_text, birth_year, born_in, birthday.
+_PROFILE_KEY_PATTERN = re.compile(r"birth|^dob$|\bborn|^(full_|first_|user_)?name$", re.I)
+
 KNOWN_LANGUAGES = {
     "english", "hindi", "hinglish", "tamil", "telugu", "kannada", "malayalam", "marathi",
     "gujarati", "bengali", "punjabi", "odia", "urdu", "assamese",
@@ -79,7 +82,7 @@ class MemoryPolicy:
         if candidate.status == "withdrawn":
             # Withdrawals are always processed; they remove, never add.
             return PolicyDecision(True, "withdrawal of an existing memory")
-        if candidate.type == MemoryType.FACT and (candidate.key or "").lower() in PROFILE_FIELD_KEYS:
+        if candidate.type == MemoryType.FACT and self.is_profile_field(candidate.key):
             return PolicyDecision(False, f"{candidate.key} is a profile field; stored on the user profile, not as a memory")
         if not candidate.persistent:
             return PolicyDecision(False, "extractor marked it non-persistent")
@@ -98,14 +101,22 @@ class MemoryPolicy:
         areas = [a for a in candidate.life_areas if a in LIFE_AREAS] or ["general"]
         key = candidate.key
         value = candidate.value.strip()
-        # Language preferences must share one slot, whatever the extractor
-        # called it, so a new language supersedes instead of duplicating.
-        if candidate.type == MemoryType.PREFERENCE and (
+        type_ = candidate.type
+        # A language preference must land in one slot, whatever the extractor
+        # called it (preference/language, fact/preferred_language, ...), so a
+        # new language supersedes the old one instead of duplicating it.
+        if type_ in (MemoryType.PREFERENCE, MemoryType.FACT) and (
             (key and "lang" in key.lower()) or value.lower() in KNOWN_LANGUAGES
         ):
+            type_ = MemoryType.PREFERENCE
             key = "language"
             value = value.title()
-        return candidate.model_copy(update={"life_areas": areas, "value": value, "key": key})
+        return candidate.model_copy(update={"type": type_, "life_areas": areas, "value": value, "key": key})
+
+    @staticmethod
+    def is_profile_field(key: str | None) -> bool:
+        k = (key or "").lower()
+        return k in PROFILE_FIELD_KEYS or bool(_PROFILE_KEY_PATTERN.search(k))
 
     def importance_for(self, candidate: MemoryCandidate) -> float:
         base = {
